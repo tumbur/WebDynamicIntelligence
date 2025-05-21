@@ -438,3 +438,17 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* Add your custom styles here */
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #212529;
+    border-top: 1px solid #343a40;
+    z-index: 1000;
+}
+
+.main-content {
+    margin-bottom: 60px;
+}
