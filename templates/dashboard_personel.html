@@ -18,6 +18,71 @@
         <div id="current-time" class="text-muted"></div>
     </div>
     
+    {% if today_schedule and today_schedule.shift_type == 'daily' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Mutasi Piket Harian</span>
+                    <button onclick="exportMutationLogPDF()" class="btn btn-sm btn-success">
+                        <i class="fas fa-file-pdf me-1"></i> Export PDF
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered" id="mutationTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%">No</th>
+                                    <th style="width: 15%">Waktu</th>
+                                    <th style="width: 50%">Isi Mutasi</th>
+                                    <th style="width: 30%">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in today_mutations %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ log.time.strftime('%H:%M') }}</td>
+                                    <td>{{ log.mutation_content }}</td>
+                                    <td>{{ log.notes or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <form id="mutationForm" method="POST" action="{{ url_for('save_mutation') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>Waktu</label>
+                                    <input type="time" class="form-control" name="time" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Isi Mutasi</label>
+                                    <textarea class="form-control" name="mutation_content" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Keterangan</label>
+                                    <textarea class="form-control" name="notes" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Tambah Mutasi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Status Cards -->
     <div class="row">
         <!-- Today's Status -->

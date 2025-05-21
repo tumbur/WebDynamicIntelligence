@@ -309,9 +309,110 @@ def delete_schedule(schedule_id):
     return redirect(url_for('schedule'))
 
 # Attendance routes
+@app.route('/mutation/save', methods=['POST'])
+@login_required
+def save_mutation():
+    if not request.form.get('mutation_content'):
+        flash('Isi mutasi tidak boleh kosong', 'danger')
+        return redirect(url_for('dashboard'))
+        
+    today = date.today()
+    mutation_time = datetime.strptime(request.form.get('time'), '%H:%M').time()
+    
+    new_mutation = DutyMutationLog(
+        user_id=current_user.id,
+        date=today,
+        time=mutation_time,
+        mutation_content=request.form.get('mutation_content'),
+        notes=request.form.get('notes')
+    )
+    
+    db.session.add(new_mutation)
+    db.session.commit()
+    
+    flash('Mutasi berhasil disimpan', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/mutation/export-pdf')
+@login_required
+def export_mutation_pdf():
+    today = date.today()
+    mutations = DutyMutationLog.query.filter_by(
+        user_id=current_user.id,
+        date=today
+    ).order_by(DutyMutationLog.time).all()
+    
+    if not mutations:
+        flash('Tidak ada data mutasi untuk hari ini', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    # Generate PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    story = []
+    
+    styles = getSampleStyleSheet()
+    
+    # Add header
+    story.append(Paragraph(f"LAPORAN MUTASI PIKET HARIAN", styles['Title']))
+    story.append(Spacer(1, 12))
+    
+    # Add date and user info
+    story.append(Paragraph(f"Hari/Tanggal: {today.strftime('%A, %d %B %Y')}", styles['Normal']))
+    story.append(Paragraph(f"Petugas Piket: {current_user.name}", styles['Normal']))
+    story.append(Spacer(1, 12))
+    
+    # Create table
+    table_data = [['No.', 'Waktu', 'Isi Mutasi', 'Keterangan']]
+    for i, mutation in enumerate(mutations, 1):
+        table_data.append([
+            str(i),
+            mutation.time.strftime('%H:%M'),
+            mutation.mutation_content,
+            mutation.notes or '-'
+        ])
+    
+    table = Table(table_data, colWidths=[40, 60, 300, 150])
+    table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (1, 0), (1, -1), 'CENTER'),
+    ]))
+    story.append(table)
+    
+    # Add signature space
+    story.append(Spacer(1, 30))
+    story.append(Paragraph(f"Aceh Tamiang, {today.strftime('%d %B %Y')}", styles['Normal']))
+    story.append(Paragraph("Petugas Piket,", styles['Normal']))
+    story.append(Spacer(1, 50))
+    story.append(Paragraph(current_user.name, styles['Normal']))
+    
+    doc.build(story)
+    buffer.seek(0)
+    
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f'mutasi_piket_{today.strftime("%Y%m%d")}.pdf',
+        mimetype='application/pdf'
+    )
+
 @app.route('/presensi')
 @login_required
 def attendance():
+    today = date.today()
+    today_mutations = DutyMutationLog.query.filter_by(
+        user_id=current_user.id,
+        date=today
+    ).order_by(DutyMutationLog.time).all()
     user_role = Role.query.get(current_user.role_id).name
     today = date.today()
     
