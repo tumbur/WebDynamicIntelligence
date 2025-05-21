@@ -142,9 +142,3 @@ document.addEventListener('shown.bs.modal', function(event) {
         getCurrentLocation();
     }
 });
-
-// Export mutation to PDF
-function exportToPDF() {
-    const attendanceId = document.querySelector('input[name="attendance_id"]').value;
-    window.location.href = `/presensi/mutation/${attendanceId}/pdf`;
-}
