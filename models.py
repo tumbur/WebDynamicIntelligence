@@ -64,6 +64,17 @@ class DutySchedule(db.Model):
         return f'<DutySchedule {self.date} - {self.shift_type}>'
 
 # Attendance model
+class DutyMutation(db.Model):
+    __tablename__ = 'duty_mutations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    attendance_id = db.Column(db.Integer, ForeignKey('attendances.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    attendance = relationship('Attendance', backref='duty_mutation')
+
 class Attendance(db.Model):
     __tablename__ = 'attendances'
     

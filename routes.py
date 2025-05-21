@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy import extract, func, and_, or_
 
 from app import app, db, role_required
-from models import User, Role, DutySchedule, Attendance, Notification
+from models import User, Role, DutySchedule, Attendance, Notification, DutyMutation
 from utils import generate_report_pdf, get_dashboard_stats, create_notification
 
 # Login route
@@ -822,3 +822,68 @@ def get_month_attendance(year, month):
     
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
+@app.route('/presensi/mutation/save', methods=['POST'])
+@login_required
+def save_mutation():
+    attendance_id = request.form.get('attendance_id')
+    content = request.form.get('content')
+    
+    if not attendance_id or not content:
+        flash('Data mutasi tidak lengkap', 'danger')
+        return redirect(url_for('attendance'))
+    
+    attendance = Attendance.query.get_or_404(attendance_id)
+    
+    # Verify ownership and type
+    if attendance.user_id != current_user.id or attendance.attendance_type != 'daily':
+        flash('Anda tidak memiliki akses', 'danger')
+        return redirect(url_for('attendance'))
+    
+    # Update or create mutation
+    mutation = DutyMutation.query.filter_by(attendance_id=attendance_id).first()
+    if mutation:
+        mutation.content = content
+    else:
+        mutation = DutyMutation(attendance_id=attendance_id, content=content)
+        db.session.add(mutation)
+    
+    db.session.commit()
+    flash('Mutasi berhasil disimpan', 'success')
+    return redirect(url_for('attendance'))
+
+@app.route('/presensi/mutation/<int:attendance_id>/pdf')
+@login_required
+def export_mutation_pdf(attendance_id):
+    attendance = Attendance.query.get_or_404(attendance_id)
+    
+    # Verify ownership and type
+    if attendance.user_id != current_user.id or attendance.attendance_type != 'daily':
+        flash('Anda tidak memiliki akses', 'danger')
+        return redirect(url_for('attendance'))
+    
+    if not attendance.duty_mutation:
+        flash('Tidak ada data mutasi', 'warning')
+        return redirect(url_for('attendance'))
+    
+    # Generate PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elements = []
+    
+    # Add title
+    elements.append(Paragraph(f"Mutasi Piket Harian - {attendance.date.strftime('%d/%m/%Y')}", styles['Title']))
+    elements.append(Spacer(1, 12))
+    
+    # Add content
+    elements.append(Paragraph(attendance.duty_mutation.content.replace('\n', '<br/>'), styles['Normal']))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f'mutasi_piket_{attendance.date.strftime("%Y%m%d")}.pdf',
+        mimetype='application/pdf'
+    )
