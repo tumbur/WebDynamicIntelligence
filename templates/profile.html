@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Profil Pengguna</h1>
     </div>
-    
+
     <div class="row">
         <!-- Profile Overview -->
         <div class="col-md-4 mb-4">
@@ -17,8 +17,14 @@
                 </div>
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <div class="profile-img bg-primary mx-auto d-flex align-items-center justify-content-center">
-                            <i class="fas fa-user fa-4x text-white"></i>
+                        <div class="profile-img mx-auto d-flex align-items-center justify-content-center">
+                            {% if current_user.photo %}
+                                <img src="{{ current_user.photo }}" alt="Profile Photo" style="width: 144px; height: 211px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-primary d-flex align-items-center justify-content-center" style="width: 144px; height: 211px;">
+                                    <i class="fas fa-user fa-4x text-white"></i>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     <h4 class="mb-1">{{ current_user.name }}</h4>
@@ -31,7 +37,7 @@
                             <span class="badge bg-success">Personel</span>
                         {% endif %}
                     </p>
-                    
+
                     <div class="text-start">
                         <div class="mb-2">
                             <i class="fas fa-user me-2"></i> <strong>Username:</strong> {{ current_user.username }}
@@ -49,7 +55,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Edit Profile Form -->
         <div class="col-md-8 mb-4">
             <div class="card">
@@ -59,7 +65,7 @@
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('profile') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        
+
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="name" class="form-label">Nama Lengkap</label>
@@ -70,14 +76,14 @@
                                 <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
                             </div>
                         </div>
-                        
+
                         <div class="mb-4">
                             <label for="phone" class="form-label">Nomor Telepon</label>
                             <input type="text" class="form-control" id="phone" name="phone" value="{{ current_user.phone or '' }}" placeholder="Masukkan nomor telepon...">
                         </div>
-                        
+
                         <hr class="my-4">
-                        
+
                         <h5 class="mb-3">Ubah Password</h5>
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -86,7 +92,7 @@
                                 <div class="form-text">Kosongkan jika tidak ingin mengubah password</div>
                             </div>
                         </div>
-                        
+
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="new_password" class="form-label">Password Baru</label>
@@ -97,7 +103,7 @@
                                 <input type="password" class="form-control" id="confirm_password" name="confirm_password">
                             </div>
                         </div>
-                        
+
                         <div class="d-flex justify-content-end">
                             <button type="reset" class="btn btn-secondary me-2">Reset</button>
                             <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
@@ -107,7 +113,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Account Activity -->
     <div class="row">
         <div class="col-12">
@@ -191,7 +197,7 @@
         const newPassword = document.getElementById('new_password');
         const confirmPassword = document.getElementById('confirm_password');
         const currentPassword = document.getElementById('current_password');
-        
+
         form.addEventListener('submit', function(e) {
             // Check if trying to change password
             if (newPassword.value || confirmPassword.value || currentPassword.value) {
@@ -202,21 +208,21 @@
                     currentPassword.focus();
                     return;
                 }
-                
+
                 if (!newPassword.value) {
                     e.preventDefault();
                     alert('Masukkan password baru');
                     newPassword.focus();
                     return;
                 }
-                
+
                 if (!confirmPassword.value) {
                     e.preventDefault();
                     alert('Masukkan konfirmasi password');
                     confirmPassword.focus();
                     return;
                 }
-                
+
                 // Check if passwords match
                 if (newPassword.value !== confirmPassword.value) {
                     e.preventDefault();

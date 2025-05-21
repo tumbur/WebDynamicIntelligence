@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     phone = db.Column(db.String(15))
+    photo = db.Column(db.String(255))
     role_id = db.Column(db.Integer, ForeignKey('roles.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
