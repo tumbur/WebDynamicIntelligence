@@ -1,0 +1,127 @@
+
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadwal Piket TIK Polres Aceh Tamiang</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .duty-table th, .duty-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .calendar-day {
+            height: 100px;
+            width: 14.28%;
+        }
+        .calendar-day.today {
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+        }
+        .calendar-day.other-month {
+            opacity: 0.5;
+        }
+        .login-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Login Button -->
+        <a href="{{ url_for('login') }}" class="btn btn-primary login-btn">
+            <i class="fas fa-sign-in-alt me-2"></i> Login
+        </a>
+        
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="display-4">Jadwal Piket Harian</h1>
+            <h2 class="h4">TIK Polres Aceh Tamiang</h2>
+            <h3 class="h5">{{ current_month }} {{ current_year }}</h3>
+        </div>
+        
+        <!-- Calendar View -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt me-2"></i> Kalender Piket
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered duty-table">
+                        <thead>
+                            <tr>
+                                <th>Minggu</th>
+                                <th>Senin</th>
+                                <th>Selasa</th>
+                                <th>Rabu</th>
+                                <th>Kamis</th>
+                                <th>Jumat</th>
+                                <th>Sabtu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for week in calendar_data %}
+                            <tr>
+                                {% for day in week %}
+                                <td class="calendar-day {% if day == 0 %}other-month{% endif %} {% if day == today.day and loop.index0 == today.weekday() %}today{% endif %}">
+                                    {% if day != 0 %}
+                                        <div class="fw-bold">{{ day }}</div>
+                                        {% for schedule in daily_schedules %}
+                                            {% if schedule.date.day == day %}
+                                            <div class="small mt-1">
+                                                <span class="badge bg-danger">Piket 24 Jam</span><br>
+                                                {{ schedule.user.name }}
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- List View -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-list me-2"></i> Daftar Piket Harian
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Nama Personel</th>
+                                <th>Waktu Piket</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in daily_schedules %}
+                            <tr>
+                                <td>{{ schedule.date.strftime('%d %B %Y') }}</td>
+                                <td>{{ schedule.user.name }}</td>
+                                <td>
+                                    <span class="badge bg-danger">Piket 24 Jam</span>
+                                    {{ schedule.start_time.strftime('%H:%M') }} - {{ schedule.end_time.strftime('%H:%M') }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
