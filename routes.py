@@ -175,7 +175,7 @@ def schedule():
     if user_role in ['admin', 'super_admin']:
         schedules = DutySchedule.query.filter(
             DutySchedule.date.between(month_start, month_end)
-        ).join(User).all()
+        ).join(User, DutySchedule.user_id == User.id).all()
     else:
         schedules = DutySchedule.query.filter(
             DutySchedule.date.between(month_start, month_end),
