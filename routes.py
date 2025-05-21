@@ -9,44 +9,9 @@ from sqlalchemy import extract, func, and_, or_
 
 from app import app, db, role_required
 from models import User, Role, DutySchedule, Attendance, Notification
-from calendar import monthcalendar, month_name
-from datetime import datetime, date
 from utils import generate_report_pdf, get_dashboard_stats, create_notification
 
 # Login route
-@app.route('/public')
-def public_dashboard():
-    today = date.today()
-    current_month = today.month
-    current_year = today.year
-    
-    # Get all schedules for current month
-    month_start = date(current_year, current_month, 1)
-    if current_month == 12:
-        next_month = 1
-        next_year = current_year + 1
-    else:
-        next_month = current_month + 1
-        next_year = current_year
-    month_end = date(next_year, next_month, 1) - timedelta(days=1)
-    
-    # Get all daily duty schedules
-    daily_schedules = DutySchedule.query.filter(
-        DutySchedule.date.between(month_start, month_end),
-        DutySchedule.shift_type == 'daily'
-    ).join(User).order_by(DutySchedule.date).all()
-    
-    # Get calendar data
-    calendar_data = monthcalendar(current_year, current_month)
-    month_name_str = month_name[current_month]
-    
-    return render_template('public_dashboard.html',
-                         daily_schedules=daily_schedules,
-                         calendar_data=calendar_data,
-                         current_month=month_name_str,
-                         current_year=current_year,
-                         today=today)
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -76,6 +41,11 @@ def login():
         
         login_user(user)
         flash(f'Selamat datang, {user.name}!', 'success')
+        
+        # Get user role
+        user_role = Role.query.get(user.role_id)
+        
+        # Redirect based on role
         return redirect(url_for('dashboard'))
     
     return render_template('login.html')
