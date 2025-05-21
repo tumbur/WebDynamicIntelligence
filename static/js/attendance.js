@@ -47,13 +47,15 @@ function updateCurrentDateTime() {
         
         if (currentTimeElement) {
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            currentTimeElement.textContent = now.toLocaleTimeString('id-ID', timeOptions);
-            
-            // Update time every second
-            setInterval(() => {
-                const updatedNow = new Date();
-                currentTimeElement.textContent = updatedNow.toLocaleTimeString('id-ID', timeOptions);
-            }, 1000);
+            const updateTime = () => {
+                const newTime = new Date().toLocaleTimeString('id-ID', timeOptions);
+                if (currentTimeElement.textContent !== newTime) {
+                    currentTimeElement.style.opacity = '1';
+                    currentTimeElement.textContent = newTime;
+                }
+            };
+            updateTime();
+            setInterval(updateTime, 1000);
         }
     }
 }
