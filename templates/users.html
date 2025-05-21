@@ -82,6 +82,7 @@
                                     </div>
                                     <div>
                                         <h5 class="mb-0">{{ user.name }}</h5>
+                                        <small class="text-muted">NRP: {{ user.nrp or 'Belum diisi' }}</small><br>
                                         <small class="text-muted">@{{ user.username }}</small>
                                     </div>
                                 </div>
@@ -154,6 +155,10 @@
                         <input type="text" class="form-control" id="username" name="username" required>
                     </div>
                     <div class="mb-3">
+                        <label for="nrp" class="form-label">NRP</label>
+                        <input type="text" class="form-control" id="nrp" name="nrp" placeholder="Masukkan NRP...">
+                    </div>
+                    <div class="mb-3">
                         <label for="name" class="form-label">Nama Lengkap</label>
                         <input type="text" class="form-control" id="name" name="name" required>
                     </div>
@@ -195,6 +200,10 @@
             <form id="editUserForm" method="POST" action="">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_nrp" class="form-label">NRP</label>
+                        <input type="text" class="form-control" id="edit_nrp" name="nrp">
+                    </div>
                     <div class="mb-3">
                         <label for="edit_name" class="form-label">Nama Lengkap</label>
                         <input type="text" class="form-control" id="edit_name" name="name" required>

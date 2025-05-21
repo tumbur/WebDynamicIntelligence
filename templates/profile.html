@@ -62,6 +62,10 @@
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
+                                <label for="nrp" class="form-label">NRP</label>
+                                <input type="text" class="form-control" id="nrp" name="nrp" value="{{ current_user.nrp or '' }}" placeholder="Masukkan NRP...">
+                            </div>
+                            <div class="col-md-6">
                                 <label for="name" class="form-label">Nama Lengkap</label>
                                 <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name }}" required>
                             </div>
