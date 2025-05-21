@@ -119,7 +119,7 @@ def get_dashboard_stats(user):
     }
 
 
-def generate_report_pdf(attendances, start_date, end_date, report_type, mutation_logs=None):
+def generate_report_pdf(attendances, start_date, end_date, report_type):
     """
     Generate a PDF report of attendance data.
     """

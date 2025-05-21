@@ -315,12 +315,6 @@ def attendance():
     user_role = Role.query.get(current_user.role_id).name
     today = date.today()
     
-    # Get today's mutations for the current user
-    today_mutations = DutyMutationLog.query.filter_by(
-        user_id=current_user.id,
-        date=today
-    ).order_by(DutyMutationLog.mutation_time).all()
-    
     # Get all personel for admin/super_admin
     if user_role in ['admin', 'super_admin']:
         personel_list = User.query.join(Role).filter(Role.name == 'personel').all()
@@ -465,34 +459,6 @@ def check_out():
     )
     
     flash(f'Check-out berhasil pada {check_out_time.strftime("%H:%M")}', 'success')
-    return redirect(url_for('attendance'))
-
-@app.route('/mutation/save', methods=['POST'])
-@login_required
-def save_mutation_log():
-    mutation_time = datetime.strptime(request.form.get('mutation_time'), '%Y-%m-%dT%H:%M')
-    mutation_content = request.form.get('mutation_content')
-    notes = request.form.get('notes')
-    
-    if not mutation_content:
-        flash('Isi mutasi tidak boleh kosong', 'danger')
-        return redirect(url_for('attendance'))
-    
-    today = date.today()
-    
-    # Save mutation log
-    mutation_log = DutyMutationLog(
-        user_id=current_user.id,
-        date=today,
-        mutation_time=mutation_time,
-        mutation_content=mutation_content,
-        notes=notes
-    )
-    
-    db.session.add(mutation_log)
-    db.session.commit()
-    
-    flash('Mutasi berhasil disimpan', 'success')
     return redirect(url_for('attendance'))
 
 @app.route('/presensi/update/<int:attendance_id>', methods=['POST'])
