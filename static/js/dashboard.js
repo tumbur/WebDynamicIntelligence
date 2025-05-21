@@ -189,6 +189,3 @@ function updateCurrentTime() {
 // Update time every second
 setInterval(updateCurrentTime, 1000);
 updateCurrentTime(); // Initialize
-function exportMutationLog() {
-    window.location.href = '/mutation/export-pdf';
-}
