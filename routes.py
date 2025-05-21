@@ -647,6 +647,92 @@ def add_user():
     db.session.commit()
     
     flash(f'User {name} berhasil ditambahkan', 'success')
+
+
+@app.route('/mutation/save', methods=['POST'])
+@login_required
+def save_mutation_log():
+    log_content = request.form.get('log_content')
+    if not log_content:
+        flash('Konten mutasi tidak boleh kosong', 'danger')
+        return redirect(url_for('dashboard'))
+        
+    today = date.today()
+    
+    # Check if user has daily duty today
+    schedule = DutySchedule.query.filter_by(
+        user_id=current_user.id,
+        date=today,
+        shift_type='daily'
+    ).first()
+    
+    if not schedule:
+        flash('Anda tidak memiliki jadwal piket harian hari ini', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Save or update log
+    mutation_log = DutyMutationLog.query.filter_by(
+        user_id=current_user.id,
+        date=today
+    ).first()
+    
+    if mutation_log:
+        mutation_log.log_content = log_content
+    else:
+        mutation_log = DutyMutationLog(
+            user_id=current_user.id,
+            date=today,
+            log_content=log_content
+        )
+        db.session.add(mutation_log)
+    
+    db.session.commit()
+    flash('Mutasi berhasil disimpan', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/mutation/export-pdf')
+@login_required
+def export_mutation_log():
+    today = date.today()
+    mutation_log = DutyMutationLog.query.filter_by(
+        user_id=current_user.id,
+        date=today
+    ).first()
+    
+    if not mutation_log:
+        flash('Tidak ada data mutasi untuk hari ini', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    # Generate PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    story = []
+    
+    styles = getSampleStyleSheet()
+    
+    # Add title
+    story.append(Paragraph(f"MUTASI PIKET HARIAN", styles['Title']))
+    story.append(Spacer(1, 12))
+    
+    # Add user info and date
+    story.append(Paragraph(f"Nama: {current_user.name}", styles['Normal']))
+    story.append(Paragraph(f"Tanggal: {today.strftime('%d-%m-%Y')}", styles['Normal']))
+    story.append(Spacer(1, 12))
+    
+    # Add content
+    story.append(Paragraph("Catatan Mutasi:", styles['Heading2']))
+    story.append(Paragraph(mutation_log.log_content, styles['Normal']))
+    
+    doc.build(story)
+    buffer.seek(0)
+    
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f'mutasi_piket_{current_user.name}_{today.strftime("%Y%m%d")}.pdf',
+        mimetype='application/pdf'
+    )
+
     return redirect(url_for('users'))
 
 @app.route('/users/edit/<int:user_id>', methods=['POST'])
