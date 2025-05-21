@@ -12,6 +12,25 @@ from models import User, Role, DutySchedule, Attendance, Notification
 from utils import generate_report_pdf, get_dashboard_stats, create_notification
 
 # Login route
+@app.route('/')
+def public_dashboard():
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
+    if today.month == 12:
+        next_month = 1
+        next_year = today.year + 1
+    else:
+        next_month = today.month + 1
+        next_year = today.year
+    month_end = date(next_year, next_month, 1) - timedelta(days=1)
+
+    # Get schedules for current month
+    schedules = DutySchedule.query.filter(
+        DutySchedule.date.between(month_start, month_end)
+    ).join(User, DutySchedule.user_id == User.id).order_by(DutySchedule.date).all()
+
+    return render_template('public_dashboard.html', schedules=schedules)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -59,7 +78,7 @@ def logout():
     return redirect(url_for('login'))
 
 # Dashboard route
-@app.route('/')
+@app.route('/dashboard')
 @login_required
 def dashboard():
     user_role = Role.query.get(current_user.role_id).name

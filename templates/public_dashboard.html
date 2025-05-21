@@ -1,0 +1,55 @@
+
+{% extends "base.html" %}
+
+{% block title %}Jadwal Piket - Presensi TIK Polres Aceh Tamiang{% endblock %}
+
+{% block unauthorized_content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Jadwal Piket Personel TIK Polres Aceh Tamiang</h2>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Nama Personel</th>
+                                    <th>Jenis Piket</th>
+                                    <th>Jam Dinas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in schedules %}
+                                <tr>
+                                    <td>{{ schedule.date.strftime('%d-%m-%Y') }}</td>
+                                    <td>{{ schedule.user.name }}</td>
+                                    <td>
+                                        {% if schedule.shift_type == 'daily' %}
+                                            <span class="badge bg-danger">Piket Harian</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Piket Reguler</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ schedule.start_time.strftime('%H:%M') }} - {{ schedule.end_time.strftime('%H:%M') }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Tidak ada jadwal piket untuk bulan ini</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
