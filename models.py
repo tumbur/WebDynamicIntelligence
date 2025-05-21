@@ -106,3 +106,17 @@ class Notification(db.Model):
     
     def __repr__(self):
         return f'<Notification {self.id}>'
+
+
+class DutyMutationLog(db.Model):
+    __tablename__ = 'duty_mutation_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, ForeignKey('users.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    mutation_time = db.Column(db.DateTime, nullable=False)
+    mutation_content = db.Column(db.Text, nullable=False)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    
+    user = relationship('User', backref='mutation_logs')
