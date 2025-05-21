@@ -199,8 +199,8 @@ function setupScheduleFormHandlers() {
                 form.method = 'POST';
                 form.action = `/jadwal/hapus/${scheduleId}`;
                 
-                // Add CSRF token
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                // Add CSRF token from template
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
                 const csrfInput = document.createElement('input');
                 csrfInput.type = 'hidden';
                 csrfInput.name = 'csrf_token';
