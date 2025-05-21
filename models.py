@@ -27,13 +27,13 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     phone = db.Column(db.String(15))
     role_id = db.Column(db.Integer, ForeignKey('roles.id'), nullable=False)
-    active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
     @property
-    def is_active(self):
-        return self.active
+    def active(self):
+        return self.is_active
     
     def __repr__(self):
         return f'<User {self.username}>'
