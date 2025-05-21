@@ -49,7 +49,10 @@ function updateCurrentDateTime() {
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
             const updateTime = () => {
                 const newTime = new Date().toLocaleTimeString('id-ID', timeOptions);
-                currentTimeElement.textContent = newTime;
+                if (currentTimeElement.textContent !== newTime) {
+                    currentTimeElement.style.opacity = '1';
+                    currentTimeElement.textContent = newTime;
+                }
             };
             updateTime();
             setInterval(updateTime, 1000);
