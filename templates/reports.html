@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Laporan - Presensi TIK Polres Aceh Tamiang{% endblock %}
+
+{% block additional_css %}
+<style>
+    .report-option {
+        margin-bottom: 1rem;
+    }
+    .report-option label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    .date-selector-buttons .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Laporan Presensi</h1>
+    </div>
+    
+    <div class="row">
+        <!-- Report Form -->
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <span>Generate Laporan</span>
+                </div>
+                <div class="card-body">
+                    <form id="report-form" method="POST" action="{{ url_for('generate_report') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <!-- Report Type -->
+                        <div class="report-option">
+                            <label>Jenis Laporan</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="report_type" id="daily" value="daily" checked>
+                                <label class="form-check-label" for="daily">
+                                    Detail Harian
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="report_type" id="summary" value="summary">
+                                <label class="form-check-label" for="summary">
+                                    Ringkasan
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Output Format -->
+                        <div class="report-option">
+                            <label>Format Output</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="output_format" id="pdf" value="pdf" checked>
+                                <label class="form-check-label" for="pdf">
+                                    PDF
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="output_format" id="csv" value="csv">
+                                <label class="form-check-label" for="csv">
+                                    CSV
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- User Selection (Admin/Super Admin only) -->
+                        {% if current_user.role.name in ['admin', 'super_admin'] %}
+                        <div class="report-option" id="user-select-container" data-role="{{ current_user.role.name }}">
+                            <label for="user_id">Personel</label>
+                            <select class="form-select" id="user_id" name="user_id">
+                                <option value="">Semua Personel</option>
+                                {% for user in personel_list %}
+                                <option value="{{ user.id }}">{{ user.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Date Range -->
+                        <div class="report-option">
+                            <label>Periode</label>
+                            <div class="date-selector-buttons mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="this-week-btn">Minggu Ini</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="this-month-btn">Bulan Ini</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="last-month-btn">Bulan Lalu</button>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <label for="start_date" class="form-label">Dari Tanggal</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">Sampai Tanggal</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-export me-1"></i> Generate Laporan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Report Description & Instructions -->
+        <div class="col-md-8 col-lg-9 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <span>Informasi Laporan</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <i class="fas fa-file-alt me-2"></i> Jenis Laporan
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h5>Detail Harian</h5>
+                                        <ul>
+                                            <li>Menampilkan data presensi lengkap per hari</li>
+                                            <li>Mencakup waktu check-in dan check-out</li>
+                                            <li>Status kehadiran tiap personel</li>
+                                            <li>Catatan presensi lengkap</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5>Ringkasan</h5>
+                                        <ul>
+                                            <li>Menampilkan ringkasan kehadiran</li>
+                                            <li>Total hari hadir, terlambat, dan tidak hadir</li>
+                                            <li>Persentase kehadiran</li>
+                                            <li>Sesuai untuk pelaporan bulanan</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <i class="fas fa-file-export me-2"></i> Format Output
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h5>PDF</h5>
+                                        <ul>
+                                            <li>Format dokumen yang mudah dibaca</li>
+                                            <li>Tampilan formal untuk pelaporan</li>
+                                            <li>Dapat langsung dicetak</li>
+                                            <li>Cocok untuk dokumentasi dan arsip</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5>CSV</h5>
+                                        <ul>
+                                            <li>Format data tabular yang dapat diolah</li>
+                                            <li>Dapat diimpor ke Excel untuk analisis lanjutan</li>
+                                            <li>Ideal untuk pengolahan data dan statistik</li>
+                                            <li>Fleksibel untuk kebutuhan khusus</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle me-2"></i> Petunjuk Penggunaan:</h5>
+                        <ol class="mb-0">
+                            <li>Pilih jenis laporan yang diinginkan</li>
+                            <li>Tentukan format output (PDF atau CSV)</li>
+                            {% if current_user.role.name in ['admin', 'super_admin'] %}
+                            <li>Pilih personel (opsional, kosongkan untuk semua personel)</li>
+                            {% endif %}
+                            <li>Pilih rentang tanggal laporan (gunakan tombol shortcut atau pilih manual)</li>
+                            <li>Klik "Generate Laporan" untuk mengunduh file laporan</li>
+                        </ol>
+                    </div>
+                    
+                    {% if current_user.role.name in ['admin', 'super_admin'] %}
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i> Catatan Admin:</h5>
+                        <ul class="mb-0">
+                            <li>Laporan untuk Semua Personel mungkin membutuhkan waktu lebih lama</li>
+                            <li>Pastikan data periode yang dipilih sudah lengkap sebelum mengunduh laporan</li>
+                            <li>Laporan ringkasan lebih sesuai untuk pelaporan manajemen</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

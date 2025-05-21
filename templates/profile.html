@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Profil - Presensi TIK Polres Aceh Tamiang{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Profil Pengguna</h1>
+    </div>
+    
+    <div class="row">
+        <!-- Profile Overview -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <span>Informasi Akun</span>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="profile-img bg-primary mx-auto d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user fa-4x text-white"></i>
+                        </div>
+                    </div>
+                    <h4 class="mb-1">{{ current_user.name }}</h4>
+                    <p class="mb-3">
+                        {% if current_user.role.name == 'super_admin' %}
+                            <span class="badge bg-danger">Super Admin</span>
+                        {% elif current_user.role.name == 'admin' %}
+                            <span class="badge bg-primary">Admin</span>
+                        {% else %}
+                            <span class="badge bg-success">Personel</span>
+                        {% endif %}
+                    </p>
+                    
+                    <div class="text-start">
+                        <div class="mb-2">
+                            <i class="fas fa-user me-2"></i> <strong>Username:</strong> {{ current_user.username }}
+                        </div>
+                        <div class="mb-2">
+                            <i class="fas fa-envelope me-2"></i> <strong>Email:</strong> {{ current_user.email }}
+                        </div>
+                        <div class="mb-2">
+                            <i class="fas fa-phone me-2"></i> <strong>Telepon:</strong> {{ current_user.phone or 'Belum diatur' }}
+                        </div>
+                        <div class="mb-2">
+                            <i class="fas fa-calendar-check me-2"></i> <strong>Terdaftar:</strong> {{ current_user.created_at.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Profile Form -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <span>Edit Profil</span>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Nama Lengkap</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="phone" class="form-label">Nomor Telepon</label>
+                            <input type="text" class="form-control" id="phone" name="phone" value="{{ current_user.phone or '' }}" placeholder="Masukkan nomor telepon...">
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h5 class="mb-3">Ubah Password</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="current_password" class="form-label">Password Saat Ini</label>
+                                <input type="password" class="form-control" id="current_password" name="current_password">
+                                <div class="form-text">Kosongkan jika tidak ingin mengubah password</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="new_password" class="form-label">Password Baru</label>
+                                <input type="password" class="form-control" id="new_password" name="new_password">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="confirm_password" class="form-label">Konfirmasi Password Baru</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end">
+                            <button type="reset" class="btn btn-secondary me-2">Reset</button>
+                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <span>Aktivitas Terakhir</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Tipe</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Status</th>
+                                    <th>Catatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in current_user.attendances[:10] %}
+                                <tr>
+                                    <td>{{ attendance.date.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if attendance.attendance_type == 'daily' %}
+                                            <span class="badge bg-danger">Harian</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Reguler</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.check_in_time %}
+                                            {{ attendance.check_in_time.strftime('%H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.check_out_time %}
+                                            {{ attendance.check_out_time.strftime('%H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.status == 'present' %}
+                                            <span class="badge bg-success">Hadir</span>
+                                        {% elif attendance.status == 'late' %}
+                                            <span class="badge bg-warning">Terlambat</span>
+                                        {% elif attendance.status == 'absent' %}
+                                            <span class="badge bg-danger">Tidak Hadir</span>
+                                        {% elif attendance.status == 'sick' %}
+                                            <span class="badge bg-info">Sakit</span>
+                                        {% elif attendance.status == 'permission' %}
+                                            <span class="badge bg-secondary">Izin</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ attendance.notes or '-' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Belum ada data aktivitas</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+    // Password confirmation validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const newPassword = document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const currentPassword = document.getElementById('current_password');
+        
+        form.addEventListener('submit', function(e) {
+            // Check if trying to change password
+            if (newPassword.value || confirmPassword.value || currentPassword.value) {
+                // Ensure all password fields are filled
+                if (!currentPassword.value) {
+                    e.preventDefault();
+                    alert('Masukkan password saat ini untuk mengubah password');
+                    currentPassword.focus();
+                    return;
+                }
+                
+                if (!newPassword.value) {
+                    e.preventDefault();
+                    alert('Masukkan password baru');
+                    newPassword.focus();
+                    return;
+                }
+                
+                if (!confirmPassword.value) {
+                    e.preventDefault();
+                    alert('Masukkan konfirmasi password');
+                    confirmPassword.focus();
+                    return;
+                }
+                
+                // Check if passwords match
+                if (newPassword.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    alert('Password baru dan konfirmasi tidak cocok');
+                    confirmPassword.focus();
+                    return;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

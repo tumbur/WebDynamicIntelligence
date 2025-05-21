@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Manajemen User - Presensi TIK Polres Aceh Tamiang{% endblock %}
+
+{% block additional_css %}
+<style>
+    .user-card {
+        transition: all 0.2s ease;
+    }
+    .user-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+    }
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .status-active {
+        background-color: #28a745;
+    }
+    .status-inactive {
+        background-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Manajemen User</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="fas fa-user-plus me-1"></i> Tambah User
+        </button>
+    </div>
+    
+    <!-- User Stats -->
+    <div class="row">
+        {% for role in roles %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="display-4">{{ users|selectattr('role_id', 'equalto', role.id)|list|length }}</h3>
+                    <p class="text-muted">
+                        {% if role.name == 'super_admin' %}
+                            <span class="badge bg-danger me-1">Super Admin</span>
+                        {% elif role.name == 'admin' %}
+                            <span class="badge bg-primary me-1">Admin</span>
+                        {% else %}
+                            <span class="badge bg-success me-1">Personel</span>
+                        {% endif %}
+                        {{ role.name|capitalize }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- User List -->
+    <div class="card">
+        <div class="card-header">
+            <span>Daftar Pengguna</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for user in users %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card user-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar bg-primary rounded-circle text-center text-white me-3">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-0">{{ user.name }}</h5>
+                                        <small class="text-muted">@{{ user.username }}</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Aktif</span>
+                                    {% else %}
+                                    <span class="badge bg-danger"><i class="fas fa-ban me-1"></i>Tidak Aktif</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div><i class="fas fa-envelope me-2 text-muted"></i> {{ user.email }}</div>
+                                <div><i class="fas fa-phone me-2 text-muted"></i> {{ user.phone or 'Tidak ada' }}</div>
+                                <div>
+                                    <i class="fas fa-user-tag me-2 text-muted"></i> 
+                                    {% if user.role.name == 'super_admin' %}
+                                        <span class="badge bg-danger">Super Admin</span>
+                                    {% elif user.role.name == 'admin' %}
+                                        <span class="badge bg-primary">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Personel</span>
+                                    {% endif %}
+                                </div>
+                                <div><i class="fas fa-calendar me-2 text-muted"></i> Terdaftar {{ user.created_at.strftime('%d/%m/%Y') }}</div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end">
+                                {% if user.id != current_user.id %}
+                                <button type="button" class="btn btn-sm btn-outline-danger me-2" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteUserModal"
+                                        data-id="{{ user.id }}" 
+                                        data-name="{{ user.name }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                        data-id="{{ user.id }}" 
+                                        data-name="{{ user.name }}"
+                                        data-email="{{ user.email }}"
+                                        data-role-id="{{ user.role_id }}"
+                                        data-is-active="{{ user.is_active|int }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Tambah User Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_user') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nama Lengkap</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role_id" class="form-label">Role</label>
+                        <select class="form-select" id="role_id" name="role_id" required>
+                            {% for role in roles %}
+                            <option value="{{ role.id }}">{{ role.name|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" value="Tik123">
+                        <div class="form-text">Default: Tik123</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Nama Lengkap</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit_email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_role_id" class="form-label">Role</label>
+                        <select class="form-select" id="edit_role_id" name="role_id" required>
+                            {% for role in roles %}
+                            <option value="{{ role.id }}">{{ role.name|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active">
+                        <label class="form-check-label" for="is_active">Aktif</label>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="reset_password" name="reset_password">
+                        <label class="form-check-label" for="reset_password">Reset Password ke Default (Tik123)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">Hapus User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Anda yakin ingin menghapus user <strong id="delete_user_name"></strong>?</p>
+                <p class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-1"></i> 
+                    Perhatian: Tindakan ini tidak dapat dibatalkan. Semua data terkait user ini (jadwal, presensi, dll) juga akan dihapus.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form id="deleteUserForm" method="POST" action="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">Hapus Permanen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup edit user modal
+        const editUserModal = document.getElementById('editUserModal');
+        editUserModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            const email = button.getAttribute('data-email');
+            const roleId = button.getAttribute('data-role-id');
+            const isActive = button.getAttribute('data-is-active') === '1';
+            
+            // Update form values
+            const form = document.getElementById('editUserForm');
+            form.action = `/users/edit/${userId}`;
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_role_id').value = roleId;
+            document.getElementById('is_active').checked = isActive;
+            document.getElementById('reset_password').checked = false;
+        });
+        
+        // Setup delete user modal
+        const deleteUserModal = document.getElementById('deleteUserModal');
+        deleteUserModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            
+            // Update form values
+            const form = document.getElementById('deleteUserForm');
+            form.action = `/users/delete/${userId}`;
+            document.getElementById('delete_user_name').textContent = name;
+        });
+    });
+</script>
+{% endblock %}

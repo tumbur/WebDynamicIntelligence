@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Presensi - Presensi TIK Polres Aceh Tamiang{% endblock %}
+
+{% block additional_css %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css">
+<style>
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+    }
+    .current-time-display {
+        font-family: 'Courier New', monospace;
+        letter-spacing: 1px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Presensi</h1>
+        <div class="text-muted">
+            <span id="current-date"></span>
+        </div>
+    </div>
+    
+    <!-- Check-in/Check-out Card -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Status Presensi Hari Ini</span>
+                    <span id="current-time" class="current-time-display"></span>
+                </div>
+                <div class="card-body check-action-card">
+                    {% if today_schedule %}
+                        <div class="mb-4">
+                            <h5>Jadwal Piket Anda</h5>
+                            <div class="d-flex justify-content-center align-items-center mb-3">
+                                <div class="me-3">
+                                    {% if today_schedule.shift_type == 'daily' %}
+                                        <span class="badge bg-danger p-2">Piket Harian (24 Jam)</span>
+                                    {% else %}
+                                        <span class="badge bg-success p-2">Piket Reguler (8 Jam)</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <span class="h5">{{ today_schedule.start_time.strftime('%H:%M') }} - {{ today_schedule.end_time.strftime('%H:%M') }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if today_schedule.notes %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i> {{ today_schedule.notes }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {% if today_attendance and today_attendance.check_in_time %}
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body text-center py-3">
+                                            <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                            <h5>Check-in Berhasil</h5>
+                                            <p class="mb-0">{{ today_attendance.check_in_time.strftime('%H:%M') }}</p>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="btn btn-lg btn-primary w-100 py-3" data-bs-toggle="modal" data-bs-target="#checkInModal">
+                                        <i class="fas fa-sign-in-alt fa-2x mb-2"></i>
+                                        <div>Check-in</div>
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {% if today_attendance and today_attendance.check_out_time %}
+                                    <div class="card bg-info text-white">
+                                        <div class="card-body text-center py-3">
+                                            <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                            <h5>Check-out Berhasil</h5>
+                                            <p class="mb-0">{{ today_attendance.check_out_time.strftime('%H:%M') }}</p>
+                                        </div>
+                                    </div>
+                                {% elif today_attendance and today_attendance.check_in_time %}
+                                    <button type="button" class="btn btn-lg btn-info w-100 py-3" data-bs-toggle="modal" data-bs-target="#checkOutModal">
+                                        <i class="fas fa-sign-out-alt fa-2x mb-2"></i>
+                                        <div>Check-out</div>
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-lg btn-info w-100 py-3" disabled>
+                                        <i class="fas fa-sign-out-alt fa-2x mb-2"></i>
+                                        <div>Check-out</div>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if today_attendance %}
+                            <div class="mt-3">
+                                <div class="alert alert-light">
+                                    <strong>Status:</strong> 
+                                    {% if today_attendance.status == 'present' %}
+                                        <span class="badge bg-success">Hadir</span>
+                                    {% elif today_attendance.status == 'late' %}
+                                        <span class="badge bg-warning">Terlambat</span>
+                                    {% elif today_attendance.status == 'absent' %}
+                                        <span class="badge bg-danger">Tidak Hadir</span>
+                                    {% elif today_attendance.status == 'sick' %}
+                                        <span class="badge bg-info">Sakit</span>
+                                    {% elif today_attendance.status == 'permission' %}
+                                        <span class="badge bg-secondary">Izin</span>
+                                    {% endif %}
+                                    
+                                    {% if today_attendance.notes %}
+                                        <div class="mt-2">
+                                            <strong>Catatan:</strong> {{ today_attendance.notes }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-xmark fa-4x text-muted mb-3"></i>
+                            <h5>Anda tidak memiliki jadwal piket hari ini</h5>
+                            <p class="text-muted">Tidak perlu melakukan presensi hari ini</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    Petunjuk Presensi
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-primary">
+                        <h5><i class="fas fa-info-circle me-2"></i> Jam Kerja:</h5>
+                        <ul>
+                            <li><strong>Piket Reguler:</strong> 08:00 - 16:00 (8 jam)</li>
+                            <li><strong>Piket Harian:</strong> 08:00 - 08:00 (keesokan hari, 24 jam)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i> Penting:</h5>
+                        <ul>
+                            <li>Check-in lebih dari 15 menit setelah jam mulai akan dianggap terlambat</li>
+                            <li>Pastikan melakukan check-out sebelum pulang/selesai shift</li>
+                            <li>Apabila berhalangan hadir, silahkan hubungi admin</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-question-circle me-2"></i> Bantuan:</h5>
+                        <p>Jika mengalami kendala dalam melakukan presensi, silahkan hubungi admin di ext. 123 atau melalui Grup WhatsApp.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Attendance History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <span>Riwayat Presensi</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="attendanceTable">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    {% if current_user.role.name in ['admin', 'super_admin'] %}
+                                    <th>Nama</th>
+                                    {% endif %}
+                                    <th>Tipe</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Status</th>
+                                    <th>Lokasi</th>
+                                    <th>Catatan</th>
+                                    {% if current_user.role.name in ['admin', 'super_admin'] %}
+                                    <th>Aksi</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in recent_attendances %}
+                                <tr>
+                                    <td>{{ attendance.date.strftime('%d/%m/%Y') }}</td>
+                                    {% if current_user.role.name in ['admin', 'super_admin'] %}
+                                    <td>{{ attendance.user.name }}</td>
+                                    {% endif %}
+                                    <td>
+                                        {% if attendance.attendance_type == 'daily' %}
+                                            <span class="badge bg-danger">Harian</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Reguler</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.check_in_time %}
+                                            {{ attendance.check_in_time.strftime('%H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.check_out_time %}
+                                            {{ attendance.check_out_time.strftime('%H:%M') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.status == 'present' %}
+                                            <span class="badge bg-success status-badge">Hadir</span>
+                                        {% elif attendance.status == 'late' %}
+                                            <span class="badge bg-warning status-badge">Terlambat</span>
+                                        {% elif attendance.status == 'absent' %}
+                                            <span class="badge bg-danger status-badge">Tidak Hadir</span>
+                                        {% elif attendance.status == 'sick' %}
+                                            <span class="badge bg-info status-badge">Sakit</span>
+                                        {% elif attendance.status == 'permission' %}
+                                            <span class="badge bg-secondary status-badge">Izin</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ attendance.location or '-' }}</td>
+                                    <td>
+                                        {% if attendance.notes %}
+                                            <span class="text-truncate-2" style="max-width: 150px;">{{ attendance.notes }}</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% if current_user.role.name in ['admin', 'super_admin'] %}
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary edit-attendance-btn"
+                                                data-bs-toggle="modal" data-bs-target="#editAttendanceModal"
+                                                data-id="{{ attendance.id }}"
+                                                data-status="{{ attendance.status }}"
+                                                data-notes="{{ attendance.notes or '' }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="{% if current_user.role.name in ['admin', 'super_admin'] %}9{% else %}7{% endif %}" class="text-center">Tidak ada data presensi</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Check-in Modal -->
+<div class="modal fade" id="checkInModal" tabindex="-1" aria-labelledby="checkInModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="checkInModalLabel">Check-in</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="checkInForm" method="POST" action="{{ url_for('check_in') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="locationInput" class="form-label">Lokasi</label>
+                        <input type="text" class="form-control" id="locationInput" name="location" value="Kantor" readonly>
+                        <div class="form-text">Lokasi akan terdeteksi otomatis jika diizinkan</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="checkInNotes" class="form-label">Catatan (opsional)</label>
+                        <textarea class="form-control" id="checkInNotes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Check-in Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Check-out Modal -->
+<div class="modal fade" id="checkOutModal" tabindex="-1" aria-labelledby="checkOutModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="checkOutModalLabel">Check-out</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="checkOutForm" method="POST" action="{{ url_for('check_out') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="checkOutNotes" class="form-label">Catatan (opsional)</label>
+                        <textarea class="form-control" id="checkOutNotes" name="notes" rows="3" placeholder="Tugas yang telah diselesaikan atau catatan lainnya..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-info">Check-out Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Attendance Modal (for Admin/Super Admin) -->
+{% if current_user.role.name in ['admin', 'super_admin'] %}
+<div class="modal fade" id="editAttendanceModal" tabindex="-1" aria-labelledby="editAttendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAttendanceModalLabel">Edit Presensi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editAttendanceForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="present">Hadir</option>
+                            <option value="late">Terlambat</option>
+                            <option value="absent">Tidak Hadir</option>
+                            <option value="sick">Sakit</option>
+                            <option value="permission">Izin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Catatan</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block additional_js %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+
+<!-- Custom JS -->
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+{% endblock %}
