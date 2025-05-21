@@ -1,0 +1,38 @@
+{
+  "project": "Aplikasi Presensi Personel TIK Polres Aceh Tamiang",
+  "language": "Python (Flask/FastAPI) atau JavaScript (Node.js/Express)",
+  "database": "SQLite atau PostgreSQL",
+  "contoh referensi aplikasi : "https://www.hadirr.com/",
+  "prompts": [
+    {
+      "step": 1,
+      "title": "Struktur Database",
+      "prompt": "Buat skema database untuk aplikasi presensi dengan 3 level user (Personel, Admin, Super Admin). Tabel yang dibutuhkan: users, roles, presensi, jadwal_piket. Sertakan field utama dan tipe datanya."
+    },
+    {
+      "step": 2,
+      "title": "Role, Autentikasi & Otorisasi",
+      "prompt": "Bangun sistem autentikasi dan otorisasi dengan tiga role: 'personel', 'admin', dan 'super_admin'. Siapkan 3 user tersebut dengan password default "Tik123". Gunakan JWT untuk autentikasi dan middleware untuk memisahkan hak akses tiap level, user dengan role 'admin' atau 'super_admin' yang bisa mengubah, atau menghapus jadwal piket. Personel hanya bisa melihat jadwalnya sendiri, gunakan logika presensi dua jenis: 1) Presensi Piket Harian (jam 08.00 s/d 08.00 esok hari), 2) Presensi Personel Biasa (jam 08.00 s/d 16.00). Validasi waktu presensi sesuai role dan jenis presensi."
+    },
+    {
+      "step": 3,
+      "title": "Laporan Presensi",
+      "prompt": "Buat fitur CRUD pelaporan presensi harian, mingguan, dan bulanan untuk personel. Admin dan super admin bisa melihat dan mendownload laporan dalam format CSV dan PDF."
+    },
+    {
+      "step": 4,
+      "title": "Dashboard Role-Based",
+      "prompt": "Desain dan implementasikan dashboard yang berbeda sesuai dengan role. Tampilkan informasi yang relevan untuk personel, admin, dan super admin."
+    },
+    {
+      "step": 5,
+      "title": "Validasi Input dan Notifikasi",
+      "prompt": "Tambahkan validasi input untuk form presensi dan CRUD. Sertakan juga sistem notifikasi sederhana untuk konfirmasi presensi berhasil, error input, atau tindakan admin."
+    },
+    {
+      "step": 6,
+      "title": "Tampilan Antarmuka Sederhana (Opsional)",
+      "prompt": "Jika menggunakan front-end, buat tampilan antarmuka sederhana menggunakan HTML/CSS atau React untuk form login, form presensi, dan halaman jadwal piket."
+    }
+  ]
+}
