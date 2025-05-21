@@ -358,10 +358,13 @@ body {
 }
 
 .current-time-display {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  transition: opacity 0.15s ease-in-out;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+#current-time {
+    transition: none;
+    font-variant-numeric: tabular-nums;
 }
 
 .current-date-display {
