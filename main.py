@@ -1,4 +1,5 @@
-from app import app
+from app import app, db
+import logging
 import routes  # noqa: F401
 
 if __name__ == "__main__":

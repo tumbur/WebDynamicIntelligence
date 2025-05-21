@@ -42,69 +42,73 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'Silahkan login untuk mengakses halaman ini.'
 login_manager.login_message_category = 'warning'
 
-# Create tables
-with app.app_context():
-    import models  # noqa: F401
-    from models import User, Role
-    db.create_all()
-    
-    # Create default roles if they don't exist
-    default_roles = ['personel', 'admin', 'super_admin']
-    existing_roles = Role.query.all()
-    existing_role_names = [role.name for role in existing_roles]
-    
-    for role_name in default_roles:
-        if role_name not in existing_role_names:
-            role = Role(name=role_name)
-            db.session.add(role)
-    
-    db.session.commit()
-    
-    # Create default super_admin user if no users exist
-    if not User.query.first():
-        from werkzeug.security import generate_password_hash
-        super_admin_role = Role.query.filter_by(name='super_admin').first()
-        admin_role = Role.query.filter_by(name='admin').first()
-        personel_role = Role.query.filter_by(name='personel').first()
-        
-        # Create super admin
-        super_admin = User(
-            username='super_admin',
-            name='Super Admin',
-            email='super_admin@example.com',
-            password_hash=generate_password_hash('Tik123'),
-            role_id=super_admin_role.id
-        )
-        
-        # Create admin
-        admin = User(
-            username='admin',
-            name='Admin',
-            email='admin@example.com',
-            password_hash=generate_password_hash('Tik123'),
-            role_id=admin_role.id
-        )
-        
-        # Create personel
-        personel = User(
-            username='personel',
-            name='Personel',
-            email='personel@example.com',
-            password_hash=generate_password_hash('Tik123'),
-            role_id=personel_role.id
-        )
-        
-        db.session.add(super_admin)
-        db.session.add(admin)
-        db.session.add(personel)
-        db.session.commit()
-    
-    logging.info("Database tables created with default roles and users")
-
 @login_manager.user_loader
 def load_user(user_id):
     from models import User
     return User.query.get(int(user_id))
+
+# Create tables and initial data
+with app.app_context():
+    from models import User, Role
+    db.create_all()
+    logging.info("Database tables created")
+    
+    try:
+        # Create default roles if they don't exist
+        default_roles = ['personel', 'admin', 'super_admin']
+        existing_roles = Role.query.all()
+        existing_role_names = [role.name for role in existing_roles]
+        
+        for role_name in default_roles:
+            if role_name not in existing_role_names:
+                new_role = Role()
+                new_role.name = role_name
+                db.session.add(new_role)
+        
+        db.session.commit()
+        logging.info("Default roles created")
+        
+        # Create default users if no users exist
+        if not User.query.first():
+            from werkzeug.security import generate_password_hash
+            super_admin_role = Role.query.filter_by(name='super_admin').first()
+            admin_role = Role.query.filter_by(name='admin').first()
+            personel_role = Role.query.filter_by(name='personel').first()
+            
+            # Create super admin
+            super_admin = User()
+            super_admin.username = 'super_admin'
+            super_admin.name = 'Super Admin'
+            super_admin.email = 'super_admin@example.com'
+            super_admin.password_hash = generate_password_hash('Tik123')
+            super_admin.role_id = super_admin_role.id
+            
+            # Create admin
+            admin = User()
+            admin.username = 'admin'
+            admin.name = 'Admin'
+            admin.email = 'admin@example.com'
+            admin.password_hash = generate_password_hash('Tik123')
+            admin.role_id = admin_role.id
+            
+            # Create personel
+            personel = User()
+            personel.username = 'personel'
+            personel.name = 'Personel'
+            personel.email = 'personel@example.com'
+            personel.password_hash = generate_password_hash('Tik123')
+            personel.role_id = personel_role.id
+            
+            db.session.add(super_admin)
+            db.session.add(admin)
+            db.session.add(personel)
+            db.session.commit()
+            logging.info("Default users created")
+        
+        logging.info("Database setup completed successfully")
+    except Exception as e:
+        logging.error(f"Error during database setup: {str(e)}")
+        db.session.rollback()
 
 # Role-based access control
 def role_required(roles):
